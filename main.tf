@@ -178,11 +178,17 @@ resource "azurerm_role_assignment" "ra2" {
 
 resource "azurerm_role_assignment" "ra3" {
   scope                = azurerm_application_gateway.appgw.id
+  role_definition_name = "Reader"
+  principal_id         = data.azurerm_user_assigned_identity.aks.principal_id
+}
+
+resource "azurerm_role_assignment" "ra4" {
+  scope                = azurerm_application_gateway.appgw.id
   role_definition_name = "Contributor"
   principal_id         = data.azurerm_user_assigned_identity.ingress.principal_id
 }
 
-resource "azurerm_role_assignment" "ra4" {
+resource "azurerm_role_assignment" "ra5" {
   scope                = azurerm_resource_group.rg.id
   role_definition_name = "Reader"
   principal_id         = data.azurerm_user_assigned_identity.ingress.principal_id
