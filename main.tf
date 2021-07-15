@@ -37,12 +37,14 @@ data "azurerm_subnet" "kubesubnet" {
   name                 = var.aks_subnet_name
   virtual_network_name = azurerm_virtual_network.vnet.name
   resource_group_name  = azurerm_resource_group.rg.name
+  depends_on = [azurerm_virtual_network.vnet]
 }
 
 data "azurerm_subnet" "appgwsubnet" {
   name                 = var.appgw_subnet_name
   virtual_network_name = azurerm_virtual_network.vnet.name
   resource_group_name  = azurerm_resource_group.rg.name
+  depends_on = [azurerm_virtual_network.vnet]
 }
 
 data "azurerm_user_assigned_identity" "aks" {
@@ -54,6 +56,13 @@ data "azurerm_user_assigned_identity" "ingress" {
   name                = "ingressapplicationgateway-${azurerm_kubernetes_cluster.aks.name}"
   resource_group_name = azurerm_kubernetes_cluster.aks.node_resource_group
 }
+
+data "azurerm_kubernetes_cluster_node_pool" "agentpool" {
+  name                    = "agentpool"
+  kubernetes_cluster_name = azurerm_kubernetes_cluster.aks.name
+  resource_group_name     = azurerm_resource_group.rg.name
+}
+
 
 resource "azurerm_kubernetes_cluster" "aks" {
   name                    = var.aks_name
@@ -113,7 +122,7 @@ resource "azurerm_application_gateway" "appgw" {
   sku {
     name     = var.app_gateway_tier
     tier     = var.app_gateway_tier
-    capacity = var.app_gateway_instance_count
+    capacity = 1
   }
 
   gateway_ip_configuration {
@@ -167,19 +176,8 @@ resource "azurerm_application_gateway" "appgw" {
 resource "azurerm_role_assignment" "ra1" {
   scope                = data.azurerm_subnet.kubesubnet.id
   role_definition_name = "Network Contributor"
-  principal_id         = data.azurerm_user_assigned_identity.aks.principal_id
-}
-
-resource "azurerm_role_assignment" "ra2" {
-  scope                = data.azurerm_user_assigned_identity.aks.id
-  role_definition_name = "Managed Identity Operator"
-  principal_id         = data.azurerm_user_assigned_identity.aks.principal_id
-}
-
-resource "azurerm_role_assignment" "ra3" {
-  scope                = azurerm_application_gateway.appgw.id
-  role_definition_name = "Reader"
-  principal_id         = data.azurerm_user_assigned_identity.aks.principal_id
+  principal_id         = data.azurerm_user_assigned_identity.ingress.principal_id
+  depends_on = [azurerm_virtual_network.vnet]
 }
 
 resource "azurerm_role_assignment" "ra4" {
@@ -192,4 +190,11 @@ resource "azurerm_role_assignment" "ra5" {
   scope                = azurerm_resource_group.rg.id
   role_definition_name = "Reader"
   principal_id         = data.azurerm_user_assigned_identity.ingress.principal_id
+}
+
+resource "azurerm_role_assignment" "ra6" {
+  scope                = data.azurerm_kubernetes_cluster_node_pool.agentpool.id
+  role_definition_name = "Contributor"
+  principal_id         = data.azurerm_user_assigned_identity.ingress.principal_id
+  depends_on           = [data.azurerm_user_assigned_identity.ingress, data.azurerm_kubernetes_cluster_node_pool.agentpool]
 }
