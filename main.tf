@@ -47,21 +47,21 @@ data "azurerm_subnet" "appgwsubnet" {
   depends_on = [azurerm_virtual_network.vnet]
 }
 
-data "azurerm_user_assigned_identity" "aks" {
-  name                = "${azurerm_kubernetes_cluster.aks.name}-agentpool"
-  resource_group_name = azurerm_kubernetes_cluster.aks.node_resource_group
-}
+# data "azurerm_user_assigned_identity" "aks" {
+#   name                = "${azurerm_kubernetes_cluster.aks.name}-agentpool"
+#   resource_group_name = azurerm_kubernetes_cluster.aks.node_resource_group
+# }
 
-data "azurerm_user_assigned_identity" "ingress" {
-  name                = "ingressapplicationgateway-${azurerm_kubernetes_cluster.aks.name}"
-  resource_group_name = azurerm_kubernetes_cluster.aks.node_resource_group
-}
+# data "azurerm_user_assigned_identity" "ingress" {
+#   name                = "ingressapplicationgateway-${azurerm_kubernetes_cluster.aks.name}"
+#   resource_group_name = azurerm_kubernetes_cluster.aks.node_resource_group
+# }
 
-data "azurerm_kubernetes_cluster_node_pool" "agentpool" {
-  name                    = "agentpool"
-  kubernetes_cluster_name = azurerm_kubernetes_cluster.aks.name
-  resource_group_name     = azurerm_resource_group.rg.name
-}
+# data "azurerm_kubernetes_cluster_node_pool" "agentpool" {
+#   name                    = "agentpool"
+#   kubernetes_cluster_name = azurerm_kubernetes_cluster.aks.name
+#   resource_group_name     = azurerm_resource_group.rg.name
+# }
 
 
 resource "azurerm_kubernetes_cluster" "aks" {
@@ -96,12 +96,12 @@ resource "azurerm_kubernetes_cluster" "aks" {
     service_cidr       = var.aks_service_cidr
   }
 
-  addon_profile {
-    ingress_application_gateway {
-      enabled    = true
-      gateway_id = resource.azurerm_application_gateway.appgw.id
-    }
-  }
+  # addon_profile {
+  #   ingress_application_gateway {
+  #     enabled    = true
+  #     gateway_id = resource.azurerm_application_gateway.appgw.id
+  #   }
+  # }
 
   depends_on = [azurerm_application_gateway.appgw]
 }
@@ -173,28 +173,28 @@ resource "azurerm_application_gateway" "appgw" {
   }
 }
 
-resource "azurerm_role_assignment" "ra1" {
-  scope                = data.azurerm_subnet.kubesubnet.id
-  role_definition_name = "Network Contributor"
-  principal_id         = data.azurerm_user_assigned_identity.ingress.principal_id
-  depends_on = [azurerm_virtual_network.vnet]
-}
+# resource "azurerm_role_assignment" "ra1" {
+#   scope                = data.azurerm_subnet.kubesubnet.id
+#   role_definition_name = "Network Contributor"
+#   principal_id         = data.azurerm_user_assigned_identity.ingress.principal_id
+#   depends_on = [azurerm_virtual_network.vnet]
+# }
 
-resource "azurerm_role_assignment" "ra4" {
-  scope                = azurerm_application_gateway.appgw.id
-  role_definition_name = "Contributor"
-  principal_id         = data.azurerm_user_assigned_identity.ingress.principal_id
-}
+# resource "azurerm_role_assignment" "ra4" {
+#   scope                = azurerm_application_gateway.appgw.id
+#   role_definition_name = "Contributor"
+#   principal_id         = data.azurerm_user_assigned_identity.ingress.principal_id
+# }
 
-resource "azurerm_role_assignment" "ra5" {
-  scope                = azurerm_resource_group.rg.id
-  role_definition_name = "Reader"
-  principal_id         = data.azurerm_user_assigned_identity.ingress.principal_id
-}
+# resource "azurerm_role_assignment" "ra5" {
+#   scope                = azurerm_resource_group.rg.id
+#   role_definition_name = "Reader"
+#   principal_id         = data.azurerm_user_assigned_identity.ingress.principal_id
+# }
 
-resource "azurerm_role_assignment" "ra6" {
-  scope                = data.azurerm_kubernetes_cluster_node_pool.agentpool.id
-  role_definition_name = "Contributor"
-  principal_id         = data.azurerm_user_assigned_identity.ingress.principal_id
-  depends_on           = [data.azurerm_user_assigned_identity.ingress, data.azurerm_kubernetes_cluster_node_pool.agentpool]
-}
+# resource "azurerm_role_assignment" "ra6" {
+#   scope                = data.azurerm_kubernetes_cluster_node_pool.agentpool.id
+#   role_definition_name = "Contributor"
+#   principal_id         = data.azurerm_user_assigned_identity.ingress.principal_id
+#   depends_on           = [data.azurerm_user_assigned_identity.ingress, data.azurerm_kubernetes_cluster_node_pool.agentpool]
+# }

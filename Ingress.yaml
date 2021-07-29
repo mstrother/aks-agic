@@ -1,0 +1,25 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: azure-vote
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: azure/application-gateway
+    appgw.ingress.kubernetes.io/waf-policy-for-path: "subscriptions/80536e48-6b00-4277-9c9b-c8c101eacc63/resourceGroups/rg-aks-001/providers/Microsoft.Network/applicationGatewayWebApplicationFirewallPolicies/waf-policy-poc"
+    #appgw.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        backend:
+          serviceName: azure-vote-front
+          servicePort: 80
+      - path: /vote
+        backend:
+          serviceName: azure-vote-front
+          servicePort: 80
+      - path: /vote
+        backend:
+          serviceName: azure-vote-front
+          servicePort: 80
